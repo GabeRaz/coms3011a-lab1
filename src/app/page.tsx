@@ -1,15 +1,28 @@
-import { createTask } from "./actions";
+import { archiveTask, createTask } from "./actions";
 import { prisma } from "@/lib/prisma";
 
 export default async function Home() {
-  const tasks = await prisma.task.findMany({
+const [activeTasks, archivedTasks] = await Promise.all([
+  prisma.task.findMany({
     where: {
       archivedAt: null,
     },
     orderBy: {
       createdAt: "desc",
     },
-  });
+  }),
+
+  prisma.task.findMany({
+    where: {
+      archivedAt: {
+        not: null,
+      },
+    },
+    orderBy: {
+      archivedAt: "desc",
+    },
+  }),
+]);
 
   return (
     <main>
@@ -49,24 +62,54 @@ export default async function Home() {
       </section>
 
       <section>
-        <h2>Active tasks</h2>
+  <h2>Active tasks</h2>
 
-        {tasks.length === 0 ? (
-          <p>No tasks have been created.</p>
-        ) : (
-          <ul>
-            {tasks.map((task) => (
-              <li key={task.id}>
-                <h3>{task.title}</h3>
-                <p>{task.description}</p>
-                <p>Topic: {task.topic}</p>
-                <p>Status: {task.status}</p>
-                <p>Due: {task.dueDate.toLocaleString()}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+  {activeTasks.length === 0 ? (
+    <p>No active tasks.</p>
+  ) : (
+    <ul>
+      {activeTasks.map((task) => (
+        <li key={task.id}>
+          <h3>{task.title}</h3>
+          <p>{task.description}</p>
+          <p>Topic: {task.topic}</p>
+          <p>Status: {task.status}</p>
+          <p>Due: {task.dueDate.toLocaleString()}</p>
+
+          <form action={archiveTask}>
+            <input type="hidden" name="taskId" value={task.id} />
+            <button type="submit">Archive task</button>
+          </form>
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
+<section>
+  <h2>Archived tasks</h2>
+
+  {archivedTasks.length === 0 ? (
+    <p>No archived tasks.</p>
+  ) : (
+    <ul>
+      {archivedTasks.map((task) => (
+        <li key={task.id}>
+          <h3>{task.title}</h3>
+          <p>{task.description}</p>
+          <p>Topic: {task.topic}</p>
+          <p>Status: {task.status}</p>
+          <p>Due: {task.dueDate.toLocaleString()}</p>
+          <p>
+            Archived:{" "}
+            {task.archivedAt
+              ? task.archivedAt.toLocaleString()
+              : "Unknown"}
+          </p>
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
     </main>
   );
 }

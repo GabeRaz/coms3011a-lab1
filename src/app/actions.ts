@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
+
+
 export async function createTask(formData: FormData) {
   const title = formData.get("title")?.toString().trim();
   const description = formData.get("description")?.toString().trim();
@@ -25,6 +27,27 @@ export async function createTask(formData: FormData) {
       description,
       topic,
       dueDate,
+    },
+  });
+
+  revalidatePath("/");
+}
+
+
+
+export async function archiveTask(formData: FormData) {
+  const taskId = Number(formData.get("taskId"));
+
+  if (!Number.isInteger(taskId) || taskId <= 0) {
+    throw new Error("Invalid task ID.");
+  }
+
+  await prisma.task.update({
+    where: {
+      id: taskId,
+    },
+    data: {
+      archivedAt: new Date(),
     },
   });
 
