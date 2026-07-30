@@ -1,9 +1,11 @@
+import { Prisma } from "@/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
 import {
   archiveTask,
   createTask,
   updateTask,
 } from "./actions";
-import { prisma } from "@/lib/prisma";
+
 
 function formatDateTimeInput(date: Date) {
   const timezoneOffset = date.getTimezoneOffset() * 60_000;
@@ -25,16 +27,68 @@ function formatStatus(status: string) {
   return "Todo";
 }
 
-export default async function Home() {
+type SortOption = "dueDate" | "topic" | "status";
+
+type HomeProps = {
+  searchParams: Promise<{
+    sort?: string | string[];
+  }>;
+};
+
+function isSortOption(value: string | undefined): value is SortOption {
+  return (
+    value === "dueDate" ||
+    value === "topic" ||
+    value === "status"
+  );
+}
+
+function getTaskOrder(
+  sort: SortOption,
+): Prisma.TaskOrderByWithRelationInput[] {
+  switch (sort) {
+    case "topic":
+      return [
+        { topic: "asc" },
+        { dueDate: "asc" },
+      ];
+
+    case "status":
+      return [
+        { status: "desc" },
+        { dueDate: "asc" },
+      ];
+
+    case "dueDate":
+    default:
+      return [
+        { dueDate: "asc" },
+      ];
+  }
+}
+
+export default async function Home({
+  searchParams,
+}: HomeProps) {
+  const parameters = await searchParams;
+
+  const requestedSort = Array.isArray(parameters.sort)
+    ? parameters.sort[0]
+    : parameters.sort;
+
+  const sort: SortOption = isSortOption(requestedSort)
+    ? requestedSort
+    : "dueDate";
+
+  const orderBy = getTaskOrder(sort);
+
   const [activeTasks, archivedTasks] = await Promise.all([
-    prisma.task.findMany({
-      where: {
-        archivedAt: null,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    }),
+  prisma.task.findMany({
+  where: {
+    archivedAt: null,
+  },
+  orderBy,
+}),
 
     prisma.task.findMany({
       where: {
@@ -101,6 +155,21 @@ export default async function Home() {
 
       <section>
         <h2>Active tasks</h2>
+        <form method="get">
+  <label htmlFor="sort">Sort tasks by</label>
+
+  <select
+    id="sort"
+    name="sort"
+    defaultValue={sort}
+  >
+    <option value="dueDate">Due date</option>
+    <option value="topic">Topic</option>
+    <option value="status">Status</option>
+  </select>
+
+  <button type="submit">Apply sort</button>
+</form>
 
         {activeTasks.length === 0 ? (
           <p>No active tasks.</p>
