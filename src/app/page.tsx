@@ -1,11 +1,13 @@
-import { Prisma } from "@/generated/prisma/client";
+import {
+  Prisma,
+  TaskStatus,
+} from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   archiveTask,
   createTask,
   updateTask,
 } from "./actions";
-
 
 function formatDateTimeInput(date: Date) {
   const timezoneOffset = date.getTimezoneOffset() * 60_000;
@@ -35,7 +37,9 @@ type HomeProps = {
   }>;
 };
 
-function isSortOption(value: string | undefined): value is SortOption {
+function isSortOption(
+  value: string | undefined,
+): value is SortOption {
   return (
     value === "dueDate" ||
     value === "topic" ||
@@ -67,6 +71,16 @@ function getTaskOrder(
   }
 }
 
+function isTaskOverdue(
+  dueDate: Date,
+  status: TaskStatus,
+) {
+  return (
+    dueDate.getTime() < Date.now() &&
+    status !== TaskStatus.COMPLETE
+  );
+}
+
 export default async function Home({
   searchParams,
 }: HomeProps) {
@@ -83,12 +97,12 @@ export default async function Home({
   const orderBy = getTaskOrder(sort);
 
   const [activeTasks, archivedTasks] = await Promise.all([
-  prisma.task.findMany({
-  where: {
-    archivedAt: null,
-  },
-  orderBy,
-}),
+    prisma.task.findMany({
+      where: {
+        archivedAt: null,
+      },
+      orderBy,
+    }),
 
     prisma.task.findMany({
       where: {
@@ -121,7 +135,9 @@ export default async function Home({
           </div>
 
           <div>
-            <label htmlFor="description">Description</label>
+            <label htmlFor="description">
+              Description
+            </label>
             <textarea
               id="description"
               name="description"
@@ -130,7 +146,9 @@ export default async function Home({
           </div>
 
           <div>
-            <label htmlFor="dueDate">Due date</label>
+            <label htmlFor="dueDate">
+              Due date
+            </label>
             <input
               id="dueDate"
               name="dueDate"
@@ -149,137 +167,195 @@ export default async function Home({
             />
           </div>
 
-          <button type="submit">Create task</button>
+          <button type="submit">
+            Create task
+          </button>
         </form>
       </section>
 
       <section>
         <h2>Active tasks</h2>
+
         <form method="get">
-  <label htmlFor="sort">Sort tasks by</label>
+          <label htmlFor="sort">
+            Sort tasks by
+          </label>
 
-  <select
-    id="sort"
-    name="sort"
-    defaultValue={sort}
-  >
-    <option value="dueDate">Due date</option>
-    <option value="topic">Topic</option>
-    <option value="status">Status</option>
-  </select>
+          <select
+            id="sort"
+            name="sort"
+            defaultValue={sort}
+          >
+            <option value="dueDate">
+              Due date
+            </option>
+            <option value="topic">
+              Topic
+            </option>
+            <option value="status">
+              Status
+            </option>
+          </select>
 
-  <button type="submit">Apply sort</button>
-</form>
+          <button type="submit">
+            Apply sort
+          </button>
+        </form>
 
         {activeTasks.length === 0 ? (
           <p>No active tasks.</p>
         ) : (
           <ul>
-            {activeTasks.map((task) => (
-              <li key={task.id}>
-                <h3>{task.title}</h3>
-                <p>{task.description}</p>
-                <p>Topic: {task.topic}</p>
-                <p>Status: {formatStatus(task.status)}</p>
-                <p>Due: {task.dueDate.toLocaleString()}</p>
+            {activeTasks.map((task) => {
+              const overdue = isTaskOverdue(
+                task.dueDate,
+                task.status,
+              );
 
-                <details>
-                  <summary>Edit task</summary>
+              return (
+                <li
+                  key={task.id}
+                  className={
+                    overdue
+                      ? "task-card task-card-overdue"
+                      : "task-card"
+                  }
+                >
+                  <h3>{task.title}</h3>
 
-                  <form action={updateTask}>
+                  {overdue && (
+                    <p className="overdue-badge">
+                      Overdue
+                    </p>
+                  )}
+
+                  <p>{task.description}</p>
+                  <p>Topic: {task.topic}</p>
+                  <p>
+                    Status:{" "}
+                    {formatStatus(task.status)}
+                  </p>
+                  <p>
+                    Due:{" "}
+                    {task.dueDate.toLocaleString()}
+                  </p>
+
+                  <details>
+                    <summary>Edit task</summary>
+
+                    <form action={updateTask}>
+                      <input
+                        type="hidden"
+                        name="taskId"
+                        value={task.id}
+                      />
+
+                      <div>
+                        <label
+                          htmlFor={`title-${task.id}`}
+                        >
+                          Title
+                        </label>
+                        <input
+                          id={`title-${task.id}`}
+                          name="title"
+                          type="text"
+                          defaultValue={task.title}
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor={`description-${task.id}`}
+                        >
+                          Description
+                        </label>
+                        <textarea
+                          id={`description-${task.id}`}
+                          name="description"
+                          defaultValue={
+                            task.description
+                          }
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor={`dueDate-${task.id}`}
+                        >
+                          Due date
+                        </label>
+                        <input
+                          id={`dueDate-${task.id}`}
+                          name="dueDate"
+                          type="datetime-local"
+                          defaultValue={formatDateTimeInput(
+                            task.dueDate,
+                          )}
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor={`topic-${task.id}`}
+                        >
+                          Topic
+                        </label>
+                        <input
+                          id={`topic-${task.id}`}
+                          name="topic"
+                          type="text"
+                          defaultValue={task.topic}
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor={`status-${task.id}`}
+                        >
+                          Status
+                        </label>
+                        <select
+                          id={`status-${task.id}`}
+                          name="status"
+                          defaultValue={task.status}
+                          required
+                        >
+                          <option value="TODO">
+                            Todo
+                          </option>
+                          <option value="IN_PROGRESS">
+                            In-Progress
+                          </option>
+                          <option value="COMPLETE">
+                            Complete
+                          </option>
+                        </select>
+                      </div>
+
+                      <button type="submit">
+                        Save changes
+                      </button>
+                    </form>
+                  </details>
+
+                  <form action={archiveTask}>
                     <input
                       type="hidden"
                       name="taskId"
                       value={task.id}
                     />
-
-                    <div>
-                      <label htmlFor={`title-${task.id}`}>
-                        Title
-                      </label>
-                      <input
-                        id={`title-${task.id}`}
-                        name="title"
-                        type="text"
-                        defaultValue={task.title}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor={`description-${task.id}`}>
-                        Description
-                      </label>
-                      <textarea
-                        id={`description-${task.id}`}
-                        name="description"
-                        defaultValue={task.description}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor={`dueDate-${task.id}`}>
-                        Due date
-                      </label>
-                      <input
-                        id={`dueDate-${task.id}`}
-                        name="dueDate"
-                        type="datetime-local"
-                        defaultValue={formatDateTimeInput(
-                          task.dueDate,
-                        )}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor={`topic-${task.id}`}>
-                        Topic
-                      </label>
-                      <input
-                        id={`topic-${task.id}`}
-                        name="topic"
-                        type="text"
-                        defaultValue={task.topic}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor={`status-${task.id}`}>
-                        Status
-                      </label>
-                      <select
-                        id={`status-${task.id}`}
-                        name="status"
-                        defaultValue={task.status}
-                        required
-                      >
-                        <option value="TODO">Todo</option>
-                        <option value="IN_PROGRESS">
-                          In-Progress
-                        </option>
-                        <option value="COMPLETE">
-                          Complete
-                        </option>
-                      </select>
-                    </div>
-
-                    <button type="submit">Save changes</button>
+                    <button type="submit">
+                      Archive task
+                    </button>
                   </form>
-                </details>
-
-                <form action={archiveTask}>
-                  <input
-                    type="hidden"
-                    name="taskId"
-                    value={task.id}
-                  />
-                  <button type="submit">Archive task</button>
-                </form>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -292,12 +368,21 @@ export default async function Home({
         ) : (
           <ul>
             {archivedTasks.map((task) => (
-              <li key={task.id}>
+              <li
+                key={task.id}
+                className="task-card"
+              >
                 <h3>{task.title}</h3>
                 <p>{task.description}</p>
                 <p>Topic: {task.topic}</p>
-                <p>Status: {formatStatus(task.status)}</p>
-                <p>Due: {task.dueDate.toLocaleString()}</p>
+                <p>
+                  Status:{" "}
+                  {formatStatus(task.status)}
+                </p>
+                <p>
+                  Due:{" "}
+                  {task.dueDate.toLocaleString()}
+                </p>
                 <p>
                   Archived:{" "}
                   {task.archivedAt?.toLocaleString()}

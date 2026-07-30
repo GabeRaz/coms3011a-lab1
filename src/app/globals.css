@@ -47,3 +47,24 @@ a {
     color-scheme: dark;
   }
 }
+.task-card {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+}
+
+.task-card-overdue {
+  border: 2px solid #b91c1c;
+  background-color: #fef2f2;
+}
+
+.overdue-badge {
+  display: inline-block;
+  margin: 0 0 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  background-color: #b91c1c;
+  color: white;
+  font-weight: 700;
+}
