@@ -123,60 +123,60 @@ export default async function Home({
       <section>
         <h2>Create a task</h2>
 
-        <form action={createTask}>
-          <div>
-            <label htmlFor="title">Title</label>
-            <input
-              id="title"
-              name="title"
-              type="text"
-              required
-            />
-          </div>
+       <form action={createTask} className="task-form">
+  <div className="form-column">
+    <div className="form-field">
+      <label htmlFor="title">Title</label>
+      <input
+        id="title"
+        name="title"
+        type="text"
+        required
+      />
+    </div>
 
-          <div>
-            <label htmlFor="description">
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              required
-            />
-          </div>
+    <div className="form-field">
+      <label htmlFor="description">Description</label>
+      <textarea
+        id="description"
+        name="description"
+        rows={5}
+        required
+      />
+    </div>
+  </div>
 
-          <div>
-            <label htmlFor="dueDate">
-              Due date
-            </label>
-            <input
-              id="dueDate"
-              name="dueDate"
-              type="datetime-local"
-              required
-            />
-          </div>
+  <div className="form-column">
+    <div className="form-field">
+      <label htmlFor="dueDate">Due date</label>
+      <input
+        id="dueDate"
+        name="dueDate"
+        type="datetime-local"
+        required
+      />
+    </div>
 
-          <div>
-            <label htmlFor="topic">Topic</label>
-            <input
-              id="topic"
-              name="topic"
-              type="text"
-              required
-            />
-          </div>
+    <div className="form-field">
+      <label htmlFor="topic">Topic</label>
+      <input
+        id="topic"
+        name="topic"
+        type="text"
+        required
+      />
+    </div>
+  </div>
 
-          <button type="submit">
-            Create task
-          </button>
-        </form>
+  <button type="submit" className="create-task-button">
+    Create task
+  </button>
+</form>
       </section>
 
       <section>
         <h2>Active tasks</h2>
-
-        <form method="get">
+        <form method="get" className="sort-form">
           <label htmlFor="sort">
             Sort tasks by
           </label>
