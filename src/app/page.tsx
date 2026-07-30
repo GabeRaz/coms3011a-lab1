@@ -1,13 +1,11 @@
-import {
-  Prisma,
-  TaskStatus,
-} from "@/generated/prisma/client";
+import {Prisma} from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   archiveTask,
   createTask,
   updateTask,
 } from "./actions";
+import { isTaskOverdue } from "@/lib/task-rules";
 
 function formatDateTimeInput(date: Date) {
   const timezoneOffset = date.getTimezoneOffset() * 60_000;
@@ -69,16 +67,6 @@ function getTaskOrder(
         { dueDate: "asc" },
       ];
   }
-}
-
-function isTaskOverdue(
-  dueDate: Date,
-  status: TaskStatus,
-) {
-  return (
-    dueDate.getTime() < Date.now() &&
-    status !== TaskStatus.COMPLETE
-  );
 }
 
 export default async function Home({

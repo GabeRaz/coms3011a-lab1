@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { TaskStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { archiveTaskRecord } from "@/lib/task-service";
 
 export async function createTask(formData: FormData) {
   const title = formData.get("title")?.toString().trim();
@@ -75,7 +76,6 @@ export async function updateTask(formData: FormData) {
 
   revalidatePath("/");
 }
-
 export async function archiveTask(formData: FormData) {
   const taskId = Number(formData.get("taskId"));
 
@@ -83,14 +83,7 @@ export async function archiveTask(formData: FormData) {
     throw new Error("Invalid task ID.");
   }
 
-  await prisma.task.update({
-    where: {
-      id: taskId,
-    },
-    data: {
-      archivedAt: new Date(),
-    },
-  });
+  await archiveTaskRecord(prisma, taskId);
 
   revalidatePath("/");
 }
