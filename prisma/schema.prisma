@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETE
+}
+
+model Task {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String
+  dueDate     DateTime
+  topic       String
+  status      TaskStatus @default(TODO)
+  archivedAt  DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([topic])
+  @@index([status])
+  @@index([dueDate])
+  @@index([archivedAt])
+}
