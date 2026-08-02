@@ -43,6 +43,7 @@ function isSortOption(
     value === "topic" ||
     value === "status"
   );
+}
 
 
 function getTaskOrder(
