@@ -78,3 +78,8 @@ Create a production build:
 ```bash
 npm run build
 ```
+
+## Documentation
+
+- [Third-Party Code](docs/third-party-code.md)
+- [Database Design](docs/database-design.md)
